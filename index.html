@@ -3,84 +3,115 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>TrailLab 🏃‍♂️👨‍🔬</title>
+<title>TrailLab v1.1 🏃‍♂️👨‍🔬</title>
 
 <link rel="stylesheet" href="style.css">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script defer src="script.js"></script>
-
 </head>
 
 <body>
 
 <header>
-
-<h1>🏃‍♂️ TrailLab 👨‍🔬</h1>
-
-<p>
-Le laboratoire d'analyse des parcours de trail
-</p>
-
+  <h1>🏃 TrailLab 👨‍🔬</h1>
+  <p>Le laboratoire d'analyse des parcours de trail</p>
+  <span class="version">v1.1</span>
 </header>
 
 <main>
 
 <section class="card">
+  <h2>Importer un GPX</h2>
 
-<h2>Importer un GPX</h2>
+  <input type="file" id="gpxFile" accept=".gpx">
 
-<input
-type="file"
-id="gpxFile"
-accept=".gpx">
+  <label class="setting">
+    Seuil D+ / D-
+    <select id="threshold">
+      <option value="0">0 m</option>
+      <option value="1">1 m</option>
+      <option value="3" selected>3 m</option>
+      <option value="5">5 m</option>
+      <option value="10">10 m</option>
+    </select>
+  </label>
 
+  <p class="hint">
+    Le seuil permet d’ignorer les petites variations GPS parasites.
+  </p>
+</section>
+
+<section class="card summary-card">
+  <h2>Résumé TrailLab</h2>
+  <p id="summaryText">Importe un fichier GPX pour générer une analyse du parcours.</p>
 </section>
 
 <section class="stats">
 
-<div class="stat">
-<span>Distance</span>
-<strong id="distance">-</strong>
-</div>
+  <div class="stat">
+    <span>Distance</span>
+    <strong id="distance">-</strong>
+  </div>
 
-<div class="stat">
-<span>D+</span>
-<strong id="dplus">-</strong>
-</div>
+  <div class="stat">
+    <span>D+</span>
+    <strong id="dplus">-</strong>
+  </div>
 
-<div class="stat">
-<span>D-</span>
-<strong id="dminus">-</strong>
-</div>
+  <div class="stat">
+    <span>D-</span>
+    <strong id="dminus">-</strong>
+  </div>
 
-<div class="stat">
-<span>Altitude min</span>
-<strong id="altMin">-</strong>
-</div>
+  <div class="stat">
+    <span>Altitude min</span>
+    <strong id="altMin">-</strong>
+  </div>
 
-<div class="stat">
-<span>Altitude max</span>
-<strong id="altMax">-</strong>
-</div>
+  <div class="stat">
+    <span>Altitude max</span>
+    <strong id="altMax">-</strong>
+  </div>
 
-<div class="stat">
-<span>D+/km</span>
-<strong id="dpkm">-</strong>
-</div>
+  <div class="stat">
+    <span>Altitude moy.</span>
+    <strong id="altAvg">-</strong>
+  </div>
+
+  <div class="stat">
+    <span>D+/km</span>
+    <strong id="dpkm">-</strong>
+  </div>
+
+  <div class="stat">
+    <span>Points GPX</span>
+    <strong id="pointsCount">-</strong>
+  </div>
+
+  <div class="stat">
+    <span>Temps total</span>
+    <strong id="totalTime">-</strong>
+  </div>
+
+  <div class="stat">
+    <span>Vitesse moy.</span>
+    <strong id="avgSpeed">-</strong>
+  </div>
+
+  <div class="stat">
+    <span>Allure moy.</span>
+    <strong id="avgPace">-</strong>
+  </div>
 
 </section>
 
 <section class="card">
-
-<h2>Profil altimétrique</h2>
-
-<canvas id="profileChart"></canvas>
-
+  <h2>Profil altimétrique</h2>
+  <canvas id="profileChart"></canvas>
 </section>
 
 </main>
 
 </body>
-
 </html>
