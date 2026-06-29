@@ -1,4 +1,4 @@
-// =====================================================
+====================
 // TrailLab v1.1
 // Partie 1 - Initialisation
 // =====================================================
@@ -126,7 +126,8 @@ function analyseParcours(points){
     let elevations = [];
 
     let tempsTotal = 0;
-        // Parcours de tous les points GPX
+
+    // Parcours de tous les points GPX
     for(let i=0;i<points.length;i++){
 
         const p = points[i];
@@ -240,6 +241,7 @@ function analyseParcours(points){
     drawChart(distances,elevations);
 
 }
+
 // =====================================================
 // Résumé automatique TrailLab
 // =====================================================
@@ -354,6 +356,7 @@ function generateSummary(data){
     document.getElementById("summaryText").textContent = texte;
 
 }
+
 // =====================================================
 // Graphique altimétrique
 // =====================================================
