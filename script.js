@@ -126,134 +126,120 @@ function analyseParcours(points){
     let elevations = [];
 
     let tempsTotal = 0;
-  // =====================================================
-// TrailLab v1.1
-// Partie 1 - Initialisation
-// =====================================================
+        // Parcours de tous les points GPX
+    for(let i=0;i<points.length;i++){
 
-let chart = null;
-let gpxPoints = [];
+        const p = points[i];
 
-document.addEventListener("DOMContentLoaded", () => {
+        altSomme += p.ele;
 
-    const fileInput = document.getElementById("gpxFile");
-    const threshold = document.getElementById("threshold");
+        altMin = Math.min(altMin,p.ele);
+        altMax = Math.max(altMax,p.ele);
 
-    fileInput.addEventListener("change", loadGPX);
+        elevations.push(p.ele);
 
-    threshold.addEventListener("change", () => {
+        if(i===0){
 
-        if(gpxPoints.length>0){
-
-            analyseParcours(gpxPoints);
+            distances.push(0);
+            continue;
 
         }
 
+        const prev = points[i-1];
+
+        const segment = haversine(prev.lat,prev.lon,p.lat,p.lon);
+
+        distance += segment;
+
+        const diff = p.ele - prev.ele;
+
+        if(diff > seuil){
+
+            dplus += diff;
+
+        }
+
+        if(diff < -seuil){
+
+            dminus += Math.abs(diff);
+
+        }
+
+        distances.push(distance/1000);
+
+    }
+
+
+    // Temps total si les données horaires existent
+    const firstTime = points[0].time;
+    const lastTime = points[points.length-1].time;
+
+    if(firstTime && lastTime && !isNaN(firstTime) && !isNaN(lastTime)){
+
+        tempsTotal = (lastTime - firstTime) / 1000;
+
+    }
+
+
+    // Calculs principaux
+    const km = distance / 1000;
+
+    const altMoy = altSomme / points.length;
+
+    const dpkm = km > 0 ? dplus / km : 0;
+
+    const vitesseMoy = tempsTotal > 0 ? km / (tempsTotal / 3600) : 0;
+
+    const allureMoy = vitesseMoy > 0 ? 60 / vitesseMoy : 0;
+
+
+    // Mise à jour de l'affichage
+    document.getElementById("distance").textContent = km.toFixed(2) + " km";
+
+    document.getElementById("dplus").textContent = Math.round(dplus) + " m";
+
+    document.getElementById("dminus").textContent = Math.round(dminus) + " m";
+
+    document.getElementById("altMin").textContent = Math.round(altMin) + " m";
+
+    document.getElementById("altMax").textContent = Math.round(altMax) + " m";
+
+    document.getElementById("altAvg").textContent = Math.round(altMoy) + " m";
+
+    document.getElementById("dpkm").textContent = Math.round(dpkm) + " m/km";
+
+    document.getElementById("pointsCount").textContent = points.length;
+
+    document.getElementById("totalTime").textContent = tempsTotal > 0 ? formatDuration(tempsTotal) : "-";
+
+    document.getElementById("avgSpeed").textContent = vitesseMoy > 0 ? vitesseMoy.toFixed(1) + " km/h" : "-";
+
+    document.getElementById("avgPace").textContent = allureMoy > 0 ? formatPace(allureMoy) + " /km" : "-";
+
+
+    // Résumé automatique
+    generateSummary({
+
+        km,
+        dplus,
+        dminus,
+        dpkm,
+        altMin,
+        altMax,
+        altMoy,
+        tempsTotal,
+        vitesseMoy,
+        allureMoy,
+        pointsCount: points.length,
+        seuil
+
     });
 
-});
 
-
-// =====================================================
-// Chargement du fichier GPX
-// =====================================================
-
-function loadGPX(event){
-
-    const file = event.target.files[0];
-
-    if(!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = function(e){
-
-        parseGPX(e.target.result);
-
-    }
-
-    reader.readAsText(file);
+    // Graphique
+    drawChart(distances,elevations);
 
 }
-
-
-// =====================================================
-// Lecture XML GPX
-// =====================================================
-
-function parseGPX(xmlText){
-
-    const parser = new DOMParser();
-
-    const xml = parser.parseFromString(xmlText,"application/xml");
-
-    const trkpts = xml.getElementsByTagName("trkpt");
-
-    if(trkpts.length===0){
-
-        alert("Aucun point GPX trouvé.");
-
-        return;
-
-    }
-
-    gpxPoints=[];
-
-    for(let i=0;i<trkpts.length;i++){
-
-        const pt = trkpts[i];
-
-        const lat = parseFloat(pt.getAttribute("lat"));
-        const lon = parseFloat(pt.getAttribute("lon"));
-
-        const eleNode = pt.getElementsByTagName("ele")[0];
-        const timeNode = pt.getElementsByTagName("time")[0];
-
-        const ele = eleNode ? parseFloat(eleNode.textContent) : 0;
-
-        const time = timeNode ? new Date(timeNode.textContent) : null;
-
-        gpxPoints.push({
-
-            lat,
-            lon,
-            ele,
-            time
-
-        });
-
-    }
-
-    analyseParcours(gpxPoints);
-
-}
-
-
-// =====================================================
-// Fonction principale d'analyse
-// =====================================================
-
-function analyseParcours(points){
-
-    const seuil = Number(document.getElementById("threshold").value);
-
-    let distance = 0;
-
-    let dplus = 0;
-
-    let dminus = 0;
-
-    let altMin = points[0].ele;
-
-    let altMax = points[0].ele;
-
-    let altSomme = 0;
-
-    let distances = [];
-
-    let elevations = [];
-
-    let tempsTotal = 0;
 // =====================================================
 // Résumé automatique TrailLab
 // =====================================================
