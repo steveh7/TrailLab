@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TrailLab 🏃‍♂️👨‍🔬</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script defer src="script.js"></script>
+
+</head>
+
+<body>
+
+<header>
+
+<h1>🏃‍♂️ TrailLab 👨‍🔬</h1>
+
+<p>
+Le laboratoire d'analyse des parcours de trail
+</p>
+
+</header>
+
+<main>
+
+<section class="card">
+
+<h2>Importer un GPX</h2>
+
+<input
+type="file"
+id="gpxFile"
+accept=".gpx">
+
+</section>
+
+<section class="stats">
+
+<div class="stat">
+<span>Distance</span>
+<strong id="distance">-</strong>
+</div>
+
+<div class="stat">
+<span>D+</span>
+<strong id="dplus">-</strong>
+</div>
+
+<div class="stat">
+<span>D-</span>
+<strong id="dminus">-</strong>
+</div>
+
+<div class="stat">
+<span>Altitude min</span>
+<strong id="altMin">-</strong>
+</div>
+
+<div class="stat">
+<span>Altitude max</span>
+<strong id="altMax">-</strong>
+</div>
+
+<div class="stat">
+<span>D+/km</span>
+<strong id="dpkm">-</strong>
+</div>
+
+</section>
+
+<section class="card">
+
+<h2>Profil altimétrique</h2>
+
+<canvas id="profileChart"></canvas>
+
+</section>
+
+</main>
+
+</body>
+
+</html>
