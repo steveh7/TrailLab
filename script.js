@@ -1,28 +1,22 @@
-// =====================================================
-// TrailLab v1.2 - Analyse + Carte
-// Partie 1 - Initialisation
-// =====================================================
-
 let chart = null;
 let gpxPoints = [];
 let map = null;
 let routeLine = null;
+let startMarker = null;
+let endMarker = null;
+let cursorMarker = null;
+let analysisCache = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-  const fileInput = document.getElementById("gpxFile");
-  const threshold = document.getElementById("threshold");
-  const tabs = document.querySelectorAll(".tab");
-
-  fileInput.addEventListener("change", loadGPX);
-
-  threshold.addEventListener("change", () => {
+  document.getElementById("gpxFile").addEventListener("change", loadGPX);
+  document.getElementById("threshold").addEventListener("change", () => {
     if (gpxPoints.length > 0) {
       analyseParcours(gpxPoints);
       drawMap(gpxPoints);
     }
   });
 
-  tabs.forEach(tab => {
+  document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => {
       const target = tab.dataset.tab;
 
@@ -32,12 +26,10 @@ document.addEventListener("DOMContentLoaded", () => {
       tab.classList.add("active");
       document.getElementById(target).classList.add("active");
 
-      if (target === "carte" && map) {
+      if (target === "explorer" && map) {
         setTimeout(() => {
           map.invalidateSize();
-          if (routeLine) {
-            map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
-          }
+          if (routeLine) map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
         }, 200);
       }
     });
@@ -49,47 +41,36 @@ function loadGPX(event) {
   if (!file) return;
 
   const reader = new FileReader();
-
-  reader.onload = function(e) {
-    parseGPX(e.target.result);
-  };
-
+  reader.onload = e => parseGPX(e.target.result);
   reader.readAsText(file);
 }
 
 function parseGPX(xmlText) {
   const parser = new DOMParser();
   const xml = parser.parseFromString(xmlText, "application/xml");
-  const trkpts = xml.getElementsByTagName("trkpt");
+  const trkpts = Array.from(xml.getElementsByTagName("trkpt"));
 
-  if (trkpts.length === 0) {
+  if (trkpts.length < 2) {
     alert("Aucun point GPX trouvé.");
     return;
   }
 
-  gpxPoints = [];
-
-  for (let i = 0; i < trkpts.length; i++) {
-    const pt = trkpts[i];
-
-    const lat = parseFloat(pt.getAttribute("lat"));
-    const lon = parseFloat(pt.getAttribute("lon"));
-
+  gpxPoints = trkpts.map(pt => {
     const eleNode = pt.getElementsByTagName("ele")[0];
     const timeNode = pt.getElementsByTagName("time")[0];
 
-    const ele = eleNode ? parseFloat(eleNode.textContent) : 0;
-    const time = timeNode ? new Date(timeNode.textContent) : null;
-
-    gpxPoints.push({ lat, lon, ele, time });
-  }
+    return {
+      lat: parseFloat(pt.getAttribute("lat")),
+      lon: parseFloat(pt.getAttribute("lon")),
+      ele: eleNode ? parseFloat(eleNode.textContent) : 0,
+      time: timeNode ? new Date(timeNode.textContent) : null,
+      distance: 0
+    };
+  });
 
   analyseParcours(gpxPoints);
   drawMap(gpxPoints);
 }
-// =====================================================
-// Partie 2 - Analyse du parcours
-// =====================================================
 
 function analyseParcours(points) {
   const seuil = Number(document.getElementById("threshold").value);
@@ -100,38 +81,37 @@ function analyseParcours(points) {
   let altMin = points[0].ele;
   let altMax = points[0].ele;
   let altSomme = 0;
-  let distances = [];
-  let elevations = [];
-  let tempsTotal = 0;
+
+  const chartData = [];
 
   for (let i = 0; i < points.length; i++) {
     const p = points[i];
 
+    if (i > 0) {
+      const prev = points[i - 1];
+      const segment = haversine(prev.lat, prev.lon, p.lat, p.lon);
+      distance += segment;
+
+      const diff = p.ele - prev.ele;
+      if (diff > seuil) dplus += diff;
+      if (diff < -seuil) dminus += Math.abs(diff);
+    }
+
+    p.distance = distance / 1000;
+
     altSomme += p.ele;
     altMin = Math.min(altMin, p.ele);
     altMax = Math.max(altMax, p.ele);
-    elevations.push(p.ele);
 
-    if (i === 0) {
-      distances.push(0);
-      continue;
-    }
-
-    const prev = points[i - 1];
-    const segment = haversine(prev.lat, prev.lon, p.lat, p.lon);
-
-    distance += segment;
-
-    const diff = p.ele - prev.ele;
-
-    if (diff > seuil) dplus += diff;
-    if (diff < -seuil) dminus += Math.abs(diff);
-
-    distances.push(distance / 1000);
+    chartData.push({
+      x: p.distance,
+      y: p.ele
+    });
   }
 
   const firstTime = points[0].time;
   const lastTime = points[points.length - 1].time;
+  let tempsTotal = 0;
 
   if (firstTime && lastTime && !isNaN(firstTime) && !isNaN(lastTime)) {
     tempsTotal = (lastTime - firstTime) / 1000;
@@ -142,6 +122,21 @@ function analyseParcours(points) {
   const dpkm = km > 0 ? dplus / km : 0;
   const vitesseMoy = tempsTotal > 0 ? km / (tempsTotal / 3600) : 0;
   const allureMoy = vitesseMoy > 0 ? 60 / vitesseMoy : 0;
+
+  analysisCache = {
+    km,
+    dplus,
+    dminus,
+    dpkm,
+    altMin,
+    altMax,
+    altMoy,
+    tempsTotal,
+    vitesseMoy,
+    allureMoy,
+    pointsCount: points.length,
+    seuil
+  };
 
   document.getElementById("distance").textContent = km.toFixed(2) + " km";
   document.getElementById("dplus").textContent = Math.round(dplus) + " m";
@@ -155,31 +150,14 @@ function analyseParcours(points) {
   document.getElementById("avgSpeed").textContent = vitesseMoy > 0 ? vitesseMoy.toFixed(1) + " km/h" : "-";
   document.getElementById("avgPace").textContent = allureMoy > 0 ? formatPace(allureMoy) + " /km" : "-";
 
-  generateSummary({
-    km,
-    dplus,
-    dminus,
-    dpkm,
-    altMin,
-    altMax,
-    altMoy,
-    tempsTotal,
-    vitesseMoy,
-    allureMoy,
-    pointsCount: points.length,
-    seuil
-  });
-
-  drawChart(distances, elevations);
+  generateSummary(analysisCache);
+  drawChart(chartData);
+  updateInspector(0);
 }
-// =====================================================
-// Partie 3 - Résumé + Carte
-// =====================================================
 
 function generateSummary(data) {
   let typeParcours = "";
   let niveau = "";
-  let conseil = "";
 
   if (data.dpkm < 20) {
     typeParcours = "parcours plutôt roulant";
@@ -195,25 +173,11 @@ function generateSummary(data) {
     niveau = "difficile";
   }
 
-  if (data.km < 10) {
-    conseil = "Format court, idéal pour une sortie rapide ou une séance spécifique.";
-  } else if (data.km < 25) {
-    conseil = "Format intéressant pour travailler l’endurance et le rythme trail.";
-  } else if (data.km < 45) {
-    conseil = "Parcours long qui demande une bonne gestion de l’effort et de l’alimentation.";
-  } else {
-    conseil = "Parcours très long : gestion de l’allure, hydratation et alimentation deviennent prioritaires.";
-  }
-
   const phraseTemps = data.tempsTotal > 0
-    ? " Le fichier contient des données horaires : temps total " +
-      formatDuration(data.tempsTotal) +
-      ", vitesse moyenne " +
-      data.vitesseMoy.toFixed(1) +
-      " km/h."
+    ? " Temps total : " + formatDuration(data.tempsTotal) + ", vitesse moyenne : " + data.vitesseMoy.toFixed(1) + " km/h."
     : " Le fichier ne contient pas de données horaires exploitables.";
 
-  const texte =
+  document.getElementById("summaryText").textContent =
     "TrailLab identifie un " +
     typeParcours +
     " de " +
@@ -222,17 +186,13 @@ function generateSummary(data) {
     Math.round(data.dplus) +
     " m D+ et " +
     Math.round(data.dminus) +
-    " m D-. " +
-    "Niveau global estimé : " +
+    " m D-. Niveau global estimé : " +
     niveau +
-    ". " +
-    conseil +
+    "." +
     phraseTemps +
     " Seuil D+/D- utilisé : " +
     data.seuil +
     " m.";
-
-  document.getElementById("summaryText").textContent = texte;
 }
 
 function drawMap(points) {
@@ -241,9 +201,7 @@ function drawMap(points) {
   const latlngs = points.map(p => [p.lat, p.lon]);
 
   if (!map) {
-    map = L.map("map", {
-      scrollWheelZoom: true
-    });
+    map = L.map("map", { scrollWheelZoom: true });
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -251,50 +209,51 @@ function drawMap(points) {
     }).addTo(map);
   }
 
-  if (routeLine) {
-    routeLine.remove();
-  }
+  if (routeLine) routeLine.remove();
+  if (startMarker) startMarker.remove();
+  if (endMarker) endMarker.remove();
+  if (cursorMarker) cursorMarker.remove();
 
   routeLine = L.polyline(latlngs, {
     weight: 4,
-    opacity: 0.9
+    opacity: 0.95
   }).addTo(map);
 
-  map.fitBounds(routeLine.getBounds(), {
-    padding: [20, 20]
-  });
-
-  const start = latlngs[0];
-  const end = latlngs[latlngs.length - 1];
-
-  L.circleMarker(start, {
-    radius: 7,
+  startMarker = L.circleMarker(latlngs[0], {
+    radius: 8,
     fillOpacity: 1
   }).addTo(map).bindPopup("Départ");
 
-  L.circleMarker(end, {
-    radius: 7,
+  endMarker = L.circleMarker(latlngs[latlngs.length - 1], {
+    radius: 8,
     fillOpacity: 1
   }).addTo(map).bindPopup("Arrivée");
-}
-// =====================================================
-// Partie 4 - Graphique + Fonctions utilitaires
-// =====================================================
 
-function drawChart(distances, elevations) {
+  cursorMarker = L.circleMarker(latlngs[0], {
+    radius: 9,
+    fillOpacity: 1,
+    weight: 3
+  }).addTo(map).bindPopup("Position");
+
+  map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
+
+  routeLine.on("click", e => {
+    const index = findNearestPointIndex(e.latlng.lat, e.latlng.lng);
+    updateInspector(index);
+  });
+}
+
+function drawChart(chartData) {
   const ctx = document.getElementById("profileChart");
 
-  if (chart) {
-    chart.destroy();
-  }
+  if (chart) chart.destroy();
 
   chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: distances.map(d => d.toFixed(1)),
       datasets: [{
         label: "Altitude (m)",
-        data: elevations,
+        data: chartData,
         borderWidth: 2,
         pointRadius: 0,
         tension: 0.25,
@@ -304,25 +263,25 @@ function drawChart(distances, elevations) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      parsing: false,
+      interaction: {
+        mode: "nearest",
+        intersect: false
+      },
       plugins: {
         legend: {
-          labels: {
-            color: "#e5e7eb"
-          }
+          labels: { color: "#e5e7eb" }
         },
         tooltip: {
           callbacks: {
-            title: function(context) {
-              return "Km " + context[0].label;
-            },
-            label: function(context) {
-              return "Altitude : " + Math.round(context.raw) + " m";
-            }
+            title: context => "Km " + Number(context[0].parsed.x).toFixed(2),
+            label: context => "Altitude : " + Math.round(context.parsed.y) + " m"
           }
         }
       },
       scales: {
         x: {
+          type: "linear",
           title: {
             display: true,
             text: "Distance (km)",
@@ -332,9 +291,7 @@ function drawChart(distances, elevations) {
             color: "#94a3b8",
             maxTicksLimit: 8
           },
-          grid: {
-            color: "#334155"
-          }
+          grid: { color: "#334155" }
         },
         y: {
           title: {
@@ -342,16 +299,99 @@ function drawChart(distances, elevations) {
             text: "Altitude (m)",
             color: "#94a3b8"
           },
-          ticks: {
-            color: "#94a3b8"
-          },
-          grid: {
-            color: "#334155"
-          }
+          ticks: { color: "#94a3b8" },
+          grid: { color: "#334155" }
         }
+      },
+      onClick: event => {
+        const index = getChartIndexFromEvent(event);
+        updateInspector(index);
       }
     }
   });
+
+  const canvas = ctx;
+  canvas.onpointermove = event => {
+    if (!gpxPoints.length || !chart) return;
+    const index = getChartIndexFromEvent(event);
+    updateInspector(index);
+  };
+}
+
+function getChartIndexFromEvent(event) {
+  const rect = chart.canvas.getBoundingClientRect();
+  const xPixel = event.clientX - rect.left;
+  const km = chart.scales.x.getValueForPixel(xPixel);
+
+  let bestIndex = 0;
+  let bestDiff = Infinity;
+
+  for (let i = 0; i < gpxPoints.length; i++) {
+    const diff = Math.abs(gpxPoints[i].distance - km);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestIndex = i;
+    }
+  }
+
+  return bestIndex;
+}
+
+function updateInspector(index) {
+  if (!gpxPoints.length) return;
+
+  index = Math.max(0, Math.min(index, gpxPoints.length - 1));
+
+  const p = gpxPoints[index];
+  const totalKm = analysisCache ? analysisCache.km : gpxPoints[gpxPoints.length - 1].distance;
+  const remaining = Math.max(0, totalKm - p.distance);
+  const slope = calculateSlope(index);
+
+  document.getElementById("inspectKm").textContent = p.distance.toFixed(2);
+  document.getElementById("inspectAlt").textContent = Math.round(p.ele) + " m";
+  document.getElementById("inspectSlope").textContent = slope > 0 ? "+" + slope.toFixed(1) + " %" : slope.toFixed(1) + " %";
+  document.getElementById("inspectRemain").textContent = remaining.toFixed(2) + " km";
+
+  if (cursorMarker) {
+    cursorMarker.setLatLng([p.lat, p.lon]);
+    cursorMarker.setPopupContent(
+      "Km " + p.distance.toFixed(2) +
+      "<br>Altitude : " + Math.round(p.ele) + " m" +
+      "<br>Pente : " + (slope > 0 ? "+" : "") + slope.toFixed(1) + " %"
+    );
+  }
+}
+
+function calculateSlope(index) {
+  if (gpxPoints.length < 3) return 0;
+
+  const before = Math.max(0, index - 5);
+  const after = Math.min(gpxPoints.length - 1, index + 5);
+
+  const p1 = gpxPoints[before];
+  const p2 = gpxPoints[after];
+
+  const distMeters = (p2.distance - p1.distance) * 1000;
+  if (distMeters === 0) return 0;
+
+  return ((p2.ele - p1.ele) / distMeters) * 100;
+}
+
+function findNearestPointIndex(lat, lon) {
+  let bestIndex = 0;
+  let bestDistance = Infinity;
+
+  for (let i = 0; i < gpxPoints.length; i++) {
+    const p = gpxPoints[i];
+    const d = haversine(lat, lon, p.lat, p.lon);
+
+    if (d < bestDistance) {
+      bestDistance = d;
+      bestIndex = i;
+    }
+  }
+
+  return bestIndex;
 }
 
 function haversine(lat1, lon1, lat2, lon2) {
@@ -378,10 +418,7 @@ function formatDuration(seconds) {
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
 
-  if (h > 0) {
-    return h + "h " + String(m).padStart(2, "0") + "min";
-  }
-
+  if (h > 0) return h + "h " + String(m).padStart(2, "0") + "min";
   return m + "min " + String(s).padStart(2, "0") + "s";
 }
 
