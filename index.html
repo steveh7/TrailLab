@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>TrailLab v1.1 🏃‍♂️👨‍🔬</title>
+<title>TrailLab v1.2 🏃‍♂️👨‍🔬</title>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="style.css">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script defer src="script.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script defer src="script.js?v=1.2"></script>
 </head>
 
 <body>
@@ -16,99 +18,71 @@
 <header>
   <h1>🏃 TrailLab 👨‍🔬</h1>
   <p>Le laboratoire d'analyse des parcours de trail</p>
-  <span class="version">v1.1</span>
+  <span class="version">v1.2</span>
 </header>
 
 <main>
 
-<section class="card">
-  <h2>Importer un GPX</h2>
+<nav class="tabs">
+  <button class="tab active" data-tab="analyse">📈 Analyse</button>
+  <button class="tab" data-tab="carte">🗺️ Carte</button>
+</nav>
 
-  <input type="file" id="gpxFile" accept=".gpx">
+<section class="tab-content active" id="analyse">
 
-  <label class="setting">
-    Seuil D+ / D-
-    <select id="threshold">
-      <option value="0">0 m</option>
-      <option value="1">1 m</option>
-      <option value="3" selected>3 m</option>
-      <option value="5">5 m</option>
-      <option value="10">10 m</option>
-    </select>
-  </label>
+  <section class="card">
+    <h2>Importer un GPX</h2>
 
-  <p class="hint">
-    Le seuil permet d’ignorer les petites variations GPS parasites.
-  </p>
-</section>
+    <input type="file" id="gpxFile" accept=".gpx">
 
-<section class="card summary-card">
-  <h2>Résumé TrailLab</h2>
-  <p id="summaryText">Importe un fichier GPX pour générer une analyse du parcours.</p>
-</section>
+    <label class="setting">
+      Seuil D+ / D-
+      <select id="threshold">
+        <option value="0">0 m</option>
+        <option value="1">1 m</option>
+        <option value="3" selected>3 m</option>
+        <option value="5">5 m</option>
+        <option value="10">10 m</option>
+      </select>
+    </label>
 
-<section class="stats">
+    <p class="hint">
+      Le seuil permet d’ignorer les petites variations GPS parasites.
+    </p>
+  </section>
 
-  <div class="stat">
-    <span>Distance</span>
-    <strong id="distance">-</strong>
-  </div>
+  <section class="card summary-card">
+    <h2>Résumé TrailLab</h2>
+    <p id="summaryText">Importe un fichier GPX pour générer une analyse du parcours.</p>
+  </section>
 
-  <div class="stat">
-    <span>D+</span>
-    <strong id="dplus">-</strong>
-  </div>
+  <section class="stats">
+    <div class="stat"><span>Distance</span><strong id="distance">-</strong></div>
+    <div class="stat"><span>D+</span><strong id="dplus">-</strong></div>
+    <div class="stat"><span>D-</span><strong id="dminus">-</strong></div>
+    <div class="stat"><span>Altitude min</span><strong id="altMin">-</strong></div>
+    <div class="stat"><span>Altitude max</span><strong id="altMax">-</strong></div>
+    <div class="stat"><span>Altitude moy.</span><strong id="altAvg">-</strong></div>
+    <div class="stat"><span>D+/km</span><strong id="dpkm">-</strong></div>
+    <div class="stat"><span>Points GPX</span><strong id="pointsCount">-</strong></div>
+    <div class="stat"><span>Temps total</span><strong id="totalTime">-</strong></div>
+    <div class="stat"><span>Vitesse moy.</span><strong id="avgSpeed">-</strong></div>
+    <div class="stat"><span>Allure moy.</span><strong id="avgPace">-</strong></div>
+  </section>
 
-  <div class="stat">
-    <span>D-</span>
-    <strong id="dminus">-</strong>
-  </div>
-
-  <div class="stat">
-    <span>Altitude min</span>
-    <strong id="altMin">-</strong>
-  </div>
-
-  <div class="stat">
-    <span>Altitude max</span>
-    <strong id="altMax">-</strong>
-  </div>
-
-  <div class="stat">
-    <span>Altitude moy.</span>
-    <strong id="altAvg">-</strong>
-  </div>
-
-  <div class="stat">
-    <span>D+/km</span>
-    <strong id="dpkm">-</strong>
-  </div>
-
-  <div class="stat">
-    <span>Points GPX</span>
-    <strong id="pointsCount">-</strong>
-  </div>
-
-  <div class="stat">
-    <span>Temps total</span>
-    <strong id="totalTime">-</strong>
-  </div>
-
-  <div class="stat">
-    <span>Vitesse moy.</span>
-    <strong id="avgSpeed">-</strong>
-  </div>
-
-  <div class="stat">
-    <span>Allure moy.</span>
-    <strong id="avgPace">-</strong>
-  </div>
+  <section class="card">
+    <h2>Profil altimétrique</h2>
+    <canvas id="profileChart"></canvas>
+  </section>
 
 </section>
 
-<section class="card">
-  <h2>Profil altimétrique</h2>
-  <canvas id="profileChart"></canvas>
+<section class="tab-content" id="carte">
+  <section class="card">
+    <h2>Carte du parcours</h2>
+    <div id="map"></div>
+    <p class="hint">La trace GPX s’affichera ici après import du fichier.</p>
+  </section>
 </section>
 
 </main>
