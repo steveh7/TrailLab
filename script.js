@@ -8,13 +8,24 @@ let cursorMarker = null;
 let analysisCache = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("gpxFile").addEventListener("change", loadGPX);
-  document.getElementById("threshold").addEventListener("change", () => {
+  const fileInput = document.getElementById("gpxFile");
+  const threshold = document.getElementById("threshold");
+  const recenterButton = document.getElementById("recenterMap");
+
+  fileInput.addEventListener("change", loadGPX);
+
+  threshold.addEventListener("change", () => {
     if (gpxPoints.length > 0) {
       analyseParcours(gpxPoints);
       drawMap(gpxPoints);
     }
   });
+
+  if (recenterButton) {
+    recenterButton.addEventListener("click", () => {
+      fitRouteToMap();
+    });
+  }
 
   document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => {
@@ -26,11 +37,10 @@ document.addEventListener("DOMContentLoaded", () => {
       tab.classList.add("active");
       document.getElementById(target).classList.add("active");
 
-      if (target === "explorer" && map) {
+      if (target === "explorer") {
         setTimeout(() => {
-          map.invalidateSize();
-          if (routeLine) map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
-        }, 200);
+          fitRouteToMap();
+        }, 350);
       }
     });
   });
@@ -235,12 +245,28 @@ function drawMap(points) {
     weight: 3
   }).addTo(map).bindPopup("Position");
 
-  map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
+  setTimeout(() => {
+  fitRouteToMap();
+  updateInspector(0);
+}, 300);
 
   routeLine.on("click", e => {
     const index = findNearestPointIndex(e.latlng.lat, e.latlng.lng);
     updateInspector(index);
   });
+}
+
+function fitRouteToMap() {
+  if (!map) return;
+
+  map.invalidateSize();
+
+  if (routeLine) {
+    map.fitBounds(routeLine.getBounds(), {
+      padding: [40, 40],
+      maxZoom: 15
+    });
+  }
 }
 
 function drawChart(chartData) {
