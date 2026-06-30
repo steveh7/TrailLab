@@ -336,17 +336,38 @@ function drawChart(chartData) {
     }
   });
 
-  const canvas = ctx;
-  canvas.onpointermove = event => {
+    const canvas = ctx;
+
+  function moveFromProfile(event) {
     if (!gpxPoints.length || !chart) return;
+
+    event.preventDefault();
+
     const index = getChartIndexFromEvent(event);
     updateInspector(index);
-  };
+  }
+
+  canvas.addEventListener("pointermove", moveFromProfile);
+  canvas.addEventListener("pointerdown", moveFromProfile);
+  canvas.addEventListener("touchmove", moveFromProfile, { passive: false });
+  canvas.addEventListener("touchstart", moveFromProfile, { passive: false });
 }
 
 function getChartIndexFromEvent(event) {
+  if (!chart || !gpxPoints.length) return 0;
+
+  let clientX;
+
+  if (event.touches && event.touches.length > 0) {
+    clientX = event.touches[0].clientX;
+  } else if (event.changedTouches && event.changedTouches.length > 0) {
+    clientX = event.changedTouches[0].clientX;
+  } else {
+    clientX = event.clientX;
+  }
+
   const rect = chart.canvas.getBoundingClientRect();
-  const xPixel = event.clientX - rect.left;
+  const xPixel = clientX - rect.left;
   const km = chart.scales.x.getValueForPixel(xPixel);
 
   let bestIndex = 0;
@@ -354,6 +375,7 @@ function getChartIndexFromEvent(event) {
 
   for (let i = 0; i < gpxPoints.length; i++) {
     const diff = Math.abs(gpxPoints[i].distance - km);
+
     if (diff < bestDiff) {
       bestDiff = diff;
       bestIndex = i;
