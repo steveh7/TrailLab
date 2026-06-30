@@ -4,42 +4,50 @@ padding:0;
 box-sizing:border-box;
 }
 
+:root{
+--bg:#0f172a;
+--panel:#1e293b;
+--panel2:#243146;
+--border:#334155;
+--text:#f8fafc;
+--muted:#94a3b8;
+--accent:#38bdf8;
+}
+
 body{
 font-family:Arial,Helvetica,sans-serif;
-background:#0f172a;
-color:#fff;
+background:var(--bg);
+color:var(--text);
 }
 
 header{
 background:#182338;
-padding:34px 20px;
+padding:32px 20px;
 text-align:center;
-border-bottom:1px solid #32415d;
+border-bottom:1px solid var(--border);
 }
 
 header h1{
 font-size:42px;
-margin-bottom:12px;
+margin-bottom:10px;
 }
 
 header p{
-font-size:18px;
-color:#a8b4c8;
+color:var(--muted);
+margin-bottom:15px;
 }
 
 .version{
 display:inline-block;
-margin-top:16px;
 padding:8px 18px;
-border-radius:999px;
 background:#163657;
 color:#3db4ff;
+border-radius:999px;
 font-weight:bold;
-font-size:18px;
 }
 
 main{
-max-width:1100px;
+max-width:1200px;
 margin:auto;
 padding:20px;
 }
@@ -47,18 +55,18 @@ padding:20px;
 .tabs{
 display:flex;
 gap:12px;
-margin-bottom:22px;
+margin-bottom:20px;
 }
 
 .tab{
 flex:1;
-padding:16px;
-font-size:18px;
-font-weight:bold;
+padding:15px;
 border:none;
-border-radius:15px;
+border-radius:14px;
 background:#223046;
 color:#9fb2cb;
+font-size:18px;
+font-weight:bold;
 cursor:pointer;
 }
 
@@ -76,149 +84,126 @@ display:block;
 }
 
 .card{
-background:#202c42;
-border-radius:22px;
-padding:24px;
-margin-bottom:24px;
-box-shadow:0 0 0 2px rgba(255,255,255,.05);
+background:var(--panel);
+padding:22px;
+border-radius:20px;
+margin-bottom:22px;
+box-shadow:0 0 0 1px rgba(255,255,255,.05);
 }
 
 .card h2{
-font-size:30px;
-margin-bottom:20px;
-}
-
-input[type=file]{
-width:100%;
-padding:16px;
-font-size:18px;
-border-radius:14px;
-background:#10182d;
-color:white;
-border:1px solid #334155;
-}
-
-.setting{
-display:flex;
-flex-direction:column;
-gap:10px;
-font-size:20px;
-margin-top:10px;
-}
-
-select{
-padding:14px;
-font-size:20px;
-border-radius:14px;
-background:#10182d;
-color:white;
-border:1px solid #334155;
-}
-
-.hint{
-margin-top:16px;
-font-size:17px;
-color:#9fb2cb;
-line-height:1.5;
+margin-bottom:18px;
 }
 
 .summary-card{
-border-left:8px solid #38bdf8;
-}
-
-.summary-card p{
-font-size:19px;
-line-height:1.6;
-color:#e7edf8;
+border-left:6px solid var(--accent);
 }
 
 .stats{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-gap:18px;
-margin-bottom:24px;
+gap:16px;
 }
 
 .stat{
-background:#243146;
-padding:20px;
-border-radius:20px;
+background:var(--panel2);
+padding:18px;
+border-radius:16px;
 }
 
 .stat span{
 display:block;
-font-size:16px;
-color:#a7b3c6;
-margin-bottom:10px;
+font-size:14px;
+color:var(--muted);
+margin-bottom:8px;
 }
 
 .stat strong{
 font-size:24px;
 }
 
-#map{
+input[type=file],
+select{
 width:100%;
-height:520px;
-border-radius:20px;
-overflow:hidden;
-margin-top:10px;
+padding:14px;
+background:#111827;
+color:white;
+border:1px solid var(--border);
+border-radius:12px;
+font-size:16px;
 }
 
-.leaflet-container{
-border-radius:20px;
+.setting{
+display:block;
+margin-top:15px;
+}
+
+.setting select{
+margin-top:8px;
+}
+
+.hint{
+margin-top:15px;
+font-size:14px;
+color:var(--muted);
+line-height:1.5;
+}
+
+#map{
+height:480px;
+border-radius:16px;
+overflow:hidden;
+}
+
+.inspector-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:12px;
+}
+
+.inspector-grid div{
+background:var(--panel2);
+padding:15px;
+border-radius:14px;
+text-align:center;
+}
+
+.inspector-grid span{
+display:block;
+font-size:13px;
+color:var(--muted);
+margin-bottom:8px;
+}
+
+.inspector-grid strong{
+font-size:20px;
 }
 
 canvas{
 width:100%!important;
-height:380px!important;
+height:360px!important;
 }
 
 @media(max-width:700px){
-
-header h1{
-font-size:34px;
-}
-
-header p{
-font-size:16px;
-}
-
-main{
-padding:14px;
-}
 
 .tabs{
 flex-direction:column;
 }
 
-.tab{
-font-size:17px;
-padding:14px;
+.inspector-grid{
+grid-template-columns:repeat(2,1fr);
 }
 
-.card{
-padding:20px;
-border-radius:20px;
-}
-
-.card h2{
-font-size:25px;
-}
-
-.summary-card p{
-font-size:17px;
-}
-
-.stat strong{
-font-size:21px;
+header h1{
+font-size:34px;
 }
 
 #map{
-height:420px;
+height:360px;
 }
 
 canvas{
-height:330px!important;
+height:300px!important;
 }
 
 }
