@@ -6,6 +6,7 @@ let startMarker = null;
 let endMarker = null;
 let cursorMarker = null;
 let analysisCache = null;
+let activeChartIndex = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("gpxFile");
@@ -274,8 +275,49 @@ function drawChart(chartData) {
 
   if (chart) chart.destroy();
 
+  activeChartIndex = 0;
+
+  const cursorPlugin = {
+    id: "trailLabCursor",
+    afterDraw(chartInstance) {
+      if (!gpxPoints.length) return;
+
+      const index = Math.max(0, Math.min(activeChartIndex, gpxPoints.length - 1));
+      const point = gpxPoints[index];
+
+      const xScale = chartInstance.scales.x;
+      const yScale = chartInstance.scales.y;
+
+      const x = xScale.getPixelForValue(point.distance);
+      const y = yScale.getPixelForValue(point.ele);
+
+      const ctx2 = chartInstance.ctx;
+      const chartArea = chartInstance.chartArea;
+
+      ctx2.save();
+
+      ctx2.beginPath();
+      ctx2.moveTo(x, chartArea.top);
+      ctx2.lineTo(x, chartArea.bottom);
+      ctx2.lineWidth = 2;
+      ctx2.strokeStyle = "rgba(248, 250, 252, 0.75)";
+      ctx2.stroke();
+
+      ctx2.beginPath();
+      ctx2.arc(x, y, 5, 0, Math.PI * 2);
+      ctx2.fillStyle = "#ef4444";
+      ctx2.fill();
+      ctx2.lineWidth = 2;
+      ctx2.strokeStyle = "#ffffff";
+      ctx2.stroke();
+
+      ctx2.restore();
+    }
+  };
+
   chart = new Chart(ctx, {
     type: "line",
+    plugins: [cursorPlugin],
     data: {
       datasets: [{
         label: "Altitude (m)",
@@ -299,10 +341,7 @@ function drawChart(chartData) {
           labels: { color: "#e5e7eb" }
         },
         tooltip: {
-          callbacks: {
-            title: context => "Km " + Number(context[0].parsed.x).toFixed(2),
-            label: context => "Altitude : " + Math.round(context.parsed.y) + " m"
-          }
+          enabled: false
         }
       },
       scales: {
@@ -336,7 +375,22 @@ function drawChart(chartData) {
     }
   });
 
-    const canvas = ctx;
+  const canvas = ctx;
+
+  function moveFromProfile(event) {
+    if (!gpxPoints.length || !chart) return;
+
+    event.preventDefault();
+
+    const index = getChartIndexFromEvent(event);
+    updateInspector(index);
+  }
+
+  canvas.addEventListener("pointermove", moveFromProfile);
+  canvas.addEventListener("pointerdown", moveFromProfile);
+  canvas.addEventListener("touchmove", moveFromProfile, { passive: false });
+  canvas.addEventListener("touchstart", moveFromProfile, { passive: false });
+}
 
   function moveFromProfile(event) {
     if (!gpxPoints.length || !chart) return;
