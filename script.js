@@ -89,13 +89,9 @@ function analyseParcours(points) {
   let distance = 0;
   let dplus = 0;
   let dminus = 0;
-  let dplusCumul = 0;
-  let dminusCumul = 0;
-
   let altMin = points[0].ele;
   let altMax = points[0].ele;
   let altSomme = 0;
-  let tempsTotal = 0;
 
   const chartData = [];
 
@@ -108,22 +104,19 @@ function analyseParcours(points) {
       distance += segment;
 
       const diff = p.ele - prev.ele;
+if (diff > seuil) {
+  dplus += diff;
+  dplusCumul += diff;
+}
 
-      if (diff > seuil) {
-        dplus += diff;
-        dplusCumul += diff;
-      }
-
-      if (diff < -seuil) {
-        const drop = Math.abs(diff);
-        dminus += drop;
-        dminusCumul += drop;
-      }
-    }
+if (diff < -seuil) {
+  dminus += Math.abs(diff);
+  dminusCumul += Math.abs(diff);
+}
 
     p.distance = distance / 1000;
-    p.dplusCumul = dplusCumul;
-    p.dminusCumul = dminusCumul;
+      p.dplusCumul = dplusCumul;
+p.dminusCumul = dminusCumul;
 
     altSomme += p.ele;
     altMin = Math.min(altMin, p.ele);
@@ -137,6 +130,9 @@ function analyseParcours(points) {
 
   const firstTime = points[0].time;
   const lastTime = points[points.length - 1].time;
+  let tempsTotal = 0;
+  let dplusCumul = 0;
+  let dminusCumul = 0;
 
   if (firstTime && lastTime && !isNaN(firstTime) && !isNaN(lastTime)) {
     tempsTotal = (lastTime - firstTime) / 1000;
