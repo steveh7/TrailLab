@@ -438,33 +438,36 @@ function updateInspector(index) {
   if (!gpxPoints.length) return;
 
   index = Math.max(0, Math.min(index, gpxPoints.length - 1));
+
   activeChartIndex = index;
 
-if (chart) {
-  chart.draw();
-}
+  if (chart) {
+    chart.draw();
+  }
 
   const p = gpxPoints[index];
   const totalKm = analysisCache ? analysisCache.km : gpxPoints[gpxPoints.length - 1].distance;
   const remaining = Math.max(0, totalKm - p.distance);
   const slope = calculateSlope(index);
+
   const totalDplus = analysisCache ? analysisCache.dplus : 0;
-const totalDminus = analysisCache ? analysisCache.dminus : 0;
+  const totalDminus = analysisCache ? analysisCache.dminus : 0;
 
-const dplusDone = p.dplusCumul || 0;
-const dminusDone = p.dminusCumul || 0;
+  const dplusDone = p.dplusCumul || 0;
+  const dminusDone = p.dminusCumul || 0;
 
-const dplusRemain = Math.max(0, totalDplus - dplusDone);
-const dminusRemain = Math.max(0, totalDminus - dminusDone);
+  const dplusRemain = Math.max(0, totalDplus - dplusDone);
+  const dminusRemain = Math.max(0, totalDminus - dminusDone);
 
   document.getElementById("inspectKm").textContent = p.distance.toFixed(2);
   document.getElementById("inspectAlt").textContent = Math.round(p.ele) + " m";
   document.getElementById("inspectSlope").textContent = slope > 0 ? "+" + slope.toFixed(1) + " %" : slope.toFixed(1) + " %";
   document.getElementById("inspectRemain").textContent = remaining.toFixed(2) + " km";
+
   document.getElementById("inspectDplusDone").textContent = Math.round(dplusDone) + " m";
-document.getElementById("inspectDplusRemain").textContent = Math.round(dplusRemain) + " m";
-document.getElementById("inspectDminusDone").textContent = Math.round(dminusDone) + " m";
-document.getElementById("inspectDminusRemain").textContent = Math.round(dminusRemain) + " m";
+  document.getElementById("inspectDplusRemain").textContent = Math.round(dplusRemain) + " m";
+  document.getElementById("inspectDminusDone").textContent = Math.round(dminusDone) + " m";
+  document.getElementById("inspectDminusRemain").textContent = Math.round(dminusRemain) + " m";
 
   if (cursorMarker) {
     cursorMarker.setLatLng([p.lat, p.lon]);
