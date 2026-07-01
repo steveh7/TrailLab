@@ -6,7 +6,6 @@ let startMarker = null;
 let endMarker = null;
 let cursorMarker = null;
 let analysisCache = null;
-let activeChartIndex = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("gpxFile");
@@ -275,49 +274,8 @@ function drawChart(chartData) {
 
   if (chart) chart.destroy();
 
-  activeChartIndex = 0;
-
-  const cursorPlugin = {
-    id: "trailLabCursor",
-    afterDraw(chartInstance) {
-      if (!gpxPoints.length) return;
-
-      const index = Math.max(0, Math.min(activeChartIndex, gpxPoints.length - 1));
-      const point = gpxPoints[index];
-
-      const xScale = chartInstance.scales.x;
-      const yScale = chartInstance.scales.y;
-
-      const x = xScale.getPixelForValue(point.distance);
-      const y = yScale.getPixelForValue(point.ele);
-
-      const ctx2 = chartInstance.ctx;
-      const chartArea = chartInstance.chartArea;
-
-      ctx2.save();
-
-      ctx2.beginPath();
-      ctx2.moveTo(x, chartArea.top);
-      ctx2.lineTo(x, chartArea.bottom);
-      ctx2.lineWidth = 2;
-      ctx2.strokeStyle = "rgba(248, 250, 252, 0.75)";
-      ctx2.stroke();
-
-      ctx2.beginPath();
-      ctx2.arc(x, y, 5, 0, Math.PI * 2);
-      ctx2.fillStyle = "#ef4444";
-      ctx2.fill();
-      ctx2.lineWidth = 2;
-      ctx2.strokeStyle = "#ffffff";
-      ctx2.stroke();
-
-      ctx2.restore();
-    }
-  };
-
   chart = new Chart(ctx, {
     type: "line",
-    plugins: [cursorPlugin],
     data: {
       datasets: [{
         label: "Altitude (m)",
@@ -341,7 +299,10 @@ function drawChart(chartData) {
           labels: { color: "#e5e7eb" }
         },
         tooltip: {
-          enabled: false
+          callbacks: {
+            title: context => "Km " + Number(context[0].parsed.x).toFixed(2),
+            label: context => "Altitude : " + Math.round(context.parsed.y) + " m"
+          }
         }
       },
       scales: {
@@ -428,11 +389,6 @@ function updateInspector(index) {
   if (!gpxPoints.length) return;
 
   index = Math.max(0, Math.min(index, gpxPoints.length - 1));
-  activeChartIndex = index;
-
-if (chart) {
-  chart.draw();
-}
 
   const p = gpxPoints[index];
   const totalKm = analysisCache ? analysisCache.km : gpxPoints[gpxPoints.length - 1].distance;
