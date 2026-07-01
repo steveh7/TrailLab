@@ -392,21 +392,6 @@ function drawChart(chartData) {
   canvas.addEventListener("touchstart", moveFromProfile, { passive: false });
 }
 
-  function moveFromProfile(event) {
-    if (!gpxPoints.length || !chart) return;
-
-    event.preventDefault();
-
-    const index = getChartIndexFromEvent(event);
-    updateInspector(index);
-  }
-
-  canvas.addEventListener("pointermove", moveFromProfile);
-  canvas.addEventListener("pointerdown", moveFromProfile);
-  canvas.addEventListener("touchmove", moveFromProfile, { passive: false });
-  canvas.addEventListener("touchstart", moveFromProfile, { passive: false });
-}
-
 function getChartIndexFromEvent(event) {
   if (!chart || !gpxPoints.length) return 0;
 
