@@ -104,11 +104,19 @@ function analyseParcours(points) {
       distance += segment;
 
       const diff = p.ele - prev.ele;
-      if (diff > seuil) dplus += diff;
-      if (diff < -seuil) dminus += Math.abs(diff);
-    }
+if (diff > seuil) {
+  dplus += diff;
+  dplusCumul += diff;
+}
+
+if (diff < -seuil) {
+  dminus += Math.abs(diff);
+  dminusCumul += Math.abs(diff);
+}
 
     p.distance = distance / 1000;
+      p.dplusCumul = dplusCumul;
+p.dminusCumul = dminusCumul;
 
     altSomme += p.ele;
     altMin = Math.min(altMin, p.ele);
@@ -123,6 +131,8 @@ function analyseParcours(points) {
   const firstTime = points[0].time;
   const lastTime = points[points.length - 1].time;
   let tempsTotal = 0;
+  let dplusCumul = 0;
+  let dminusCumul = 0;
 
   if (firstTime && lastTime && !isNaN(firstTime) && !isNaN(lastTime)) {
     tempsTotal = (lastTime - firstTime) / 1000;
@@ -438,11 +448,23 @@ if (chart) {
   const totalKm = analysisCache ? analysisCache.km : gpxPoints[gpxPoints.length - 1].distance;
   const remaining = Math.max(0, totalKm - p.distance);
   const slope = calculateSlope(index);
+  const totalDplus = analysisCache ? analysisCache.dplus : 0;
+const totalDminus = analysisCache ? analysisCache.dminus : 0;
+
+const dplusDone = p.dplusCumul || 0;
+const dminusDone = p.dminusCumul || 0;
+
+const dplusRemain = Math.max(0, totalDplus - dplusDone);
+const dminusRemain = Math.max(0, totalDminus - dminusDone);
 
   document.getElementById("inspectKm").textContent = p.distance.toFixed(2);
   document.getElementById("inspectAlt").textContent = Math.round(p.ele) + " m";
   document.getElementById("inspectSlope").textContent = slope > 0 ? "+" + slope.toFixed(1) + " %" : slope.toFixed(1) + " %";
   document.getElementById("inspectRemain").textContent = remaining.toFixed(2) + " km";
+  document.getElementById("inspectDplusDone").textContent = Math.round(dplusDone) + " m";
+document.getElementById("inspectDplusRemain").textContent = Math.round(dplusRemain) + " m";
+document.getElementById("inspectDminusDone").textContent = Math.round(dminusDone) + " m";
+document.getElementById("inspectDminusRemain").textContent = Math.round(dminusRemain) + " m";
 
   if (cursorMarker) {
     cursorMarker.setLatLng([p.lat, p.lon]);
