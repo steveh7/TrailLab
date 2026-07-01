@@ -443,6 +443,11 @@ function updateInspector(index) {
   if (!gpxPoints.length) return;
 
   index = Math.max(0, Math.min(index, gpxPoints.length - 1));
+  activeChartIndex = index;
+
+if (chart) {
+  chart.draw();
+}
 
   const p = gpxPoints[index];
   const totalKm = analysisCache ? analysisCache.km : gpxPoints[gpxPoints.length - 1].distance;
