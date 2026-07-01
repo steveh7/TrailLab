@@ -179,6 +179,7 @@ function analyseParcours(points) {
   drawChart(chartData);
   updateInspector(0);
 }
+
 function generateSummary(data) {
   let typeParcours = "";
   let niveau = "";
